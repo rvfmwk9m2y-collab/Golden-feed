@@ -101,6 +101,19 @@
   header { position: relative; overflow: hidden; }
   .ralph-img { display: block; width: 85%; max-width: 420px; margin: 0 auto -20px; opacity: 0.95; pointer-events: none; filter: drop-shadow(2px 6px 16px rgba(139,94,42,0.2)); position: relative; z-index: 0; }
   .header-content { position: relative; z-index: 1; }
+
+  /* Paw rating */
+  .paw-rating { display: flex; align-items: center; gap: 4px; padding: 10px 14px; border-top: 1px solid var(--border); background: var(--gold-pale); }
+  .paw-label { font-size: 11px; color: var(--text-muted); font-weight: 500; margin-right: 4px; }
+  .paw-btn { background: none; border: none; font-size: 20px; cursor: pointer; padding: 2px 4px; border-radius: 6px; line-height: 1; -webkit-tap-highlight-color: transparent; transition: transform 0.15s; opacity: 0.35; }
+  .paw-btn.active { opacity: 1; transform: scale(1.15); }
+  .paw-btn:hover { opacity: 0.8; }
+  .rating-badge { display: inline-flex; align-items: center; gap: 2px; font-size: 12px; }
+  .sort-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; flex-wrap: wrap; gap: 8px; }
+  .sort-label { font-size: 11px; color: var(--text-muted); font-weight: 500; text-transform: uppercase; letter-spacing: 0.06em; }
+  .sort-options { display: flex; gap: 5px; }
+  .sort-opt { padding: 5px 10px; border: 1px solid var(--border); background: white; border-radius: 20px; font-size: 11.5px; font-weight: 500; color: var(--text-muted); cursor: pointer; font-family: 'DM Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
+  .sort-opt.active { background: var(--gold-pale); color: var(--gold-deep); border-color: var(--gold); }
 </style>
 </head>
 <body>
@@ -184,6 +197,13 @@
       <div class="count-bar">
         <span class="count-badge">Saved <strong id="postCount">0</strong> posts</span>
         <button class="clear-btn" onclick="clearAll()">Clear all</button>
+      </div>
+      <div class="sort-bar">
+        <span class="sort-label">Sort by</span>
+        <div class="sort-options">
+          <button class="sort-opt active" data-ssort="rating" onclick="setSavedSort('rating',this)">🐾 Rating</button>
+          <button class="sort-opt" data-ssort="recent" onclick="setSavedSort('recent',this)">✨ Recent</button>
+        </div>
       </div>
       <div id="savedFeed"></div>
     </div>
