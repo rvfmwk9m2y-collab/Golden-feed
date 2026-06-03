@@ -269,34 +269,35 @@ function loadReddit(force){
 }
 
 // ── YouTube via rss2json + Reddit search RSS ──
+var YT_INST=['https://invidious.kavin.rocks','https://yewtu.be','https://inv.riverside.rocks','https://vid.puffyan.us','https://invidious.snopyta.org'];
 function loadYoutube(force){
   if(!force&&ytLoaded)return;
   var btn=document.getElementById('yBtn');btn.disabled=true;btn.textContent='Loading…';
   document.getElementById('ytContent').innerHTML='<div class="status-msg">Searching for golden retriever videos… 🎬</div>';
-  var url='https://www.reddit.com/search.json?q=golden+retriever+site%3Ayoutube.com&sort='+ytSort+'&limit=25';
-  fetch(url)
-    .then(function(r){return r.json();})
-    .then(function(data){
-      btn.disabled=false;btn.textContent='↻ Refresh';ytLoaded=true;
-      var seen={},videos=[];
-      ((data.data&&data.data.children)||[]).forEach(function(child){
-        var item=child.data;
-        var id=ytId(item.url||'');
-        if(!id||seen[id])return;
-        seen[id]=true;
-        videos.push({id:id,title:item.title||'Golden Retriever Video'});
-      });
-      if(!videos.length){document.getElementById('ytContent').innerHTML='<div class="status-msg">No videos found — try a different sort or <span class="retry" onclick="loadYoutube(true)">tap to retry</span>.</div>';return;}
-      var html='<div class="content-grid">';
-      videos.forEach(function(v){
-        var watchUrl='https://www.youtube.com/watch?v='+v.id;
-        var thumb='https://img.youtube.com/vi/'+v.id+'/mqdefault.jpg';
-        var post={type:'youtube',url:watchUrl,ytId:v.id,title:v.title};
-        html+='<div class="content-card"><div class="thumb-wrap yt-thumb"><img src="'+esc(thumb)+'" loading="lazy"></div><div class="card-body"><p class="card-title">'+esc(v.title)+'</p><div class="card-footer"><span class="card-stat">YouTube</span>'+makeSaveBtn(watchUrl,post)+'</div></div></div>';
-      });
-      document.getElementById('ytContent').innerHTML=html+'</div>';
-    })
-    .catch(function(){btn.disabled=false;btn.textContent='↻ Refresh';document.getElementById('ytContent').innerHTML='<div class="status-msg">Could not load videos.<br><span class="retry" onclick="loadYoutube(true)">Tap to retry</span></div>';});
+  var sortMap={'top&t=month':'relevance','new':'upload_date','top&t=all':'view_count'};
+  var sortBy=sortMap[ytSort]||'relevance';
+  function tryInst(idx){
+    if(idx>=YT_INST.length){btn.disabled=false;btn.textContent='↻ Refresh';document.getElementById('ytContent').innerHTML='<div class="status-msg">Could not load videos.<br><span class="retry" onclick="loadYoutube(true)">Tap to retry</span></div>';return;}
+    var ctrl=new AbortController();var timer=setTimeout(function(){ctrl.abort();},8000);
+    fetch(YT_INST[idx]+'/api/v1/search?q=golden+retriever&type=video&sort_by='+sortBy+'&page=1',{signal:ctrl.signal})
+      .then(function(r){clearTimeout(timer);return r.json();})
+      .then(function(data){
+        if(!Array.isArray(data)||!data.length){tryInst(idx+1);return;}
+        btn.disabled=false;btn.textContent='↻ Refresh';ytLoaded=true;
+        var seen={},html='<div class="content-grid">';
+        data.forEach(function(v){
+          if(!v.videoId||seen[v.videoId])return;
+          seen[v.videoId]=true;
+          var watchUrl='https://www.youtube.com/watch?v='+v.videoId;
+          var thumb='https://img.youtube.com/vi/'+v.videoId+'/mqdefault.jpg';
+          var post={type:'youtube',url:watchUrl,ytId:v.videoId,title:v.title||'Golden Retriever Video'};
+          html+='<div class="content-card"><div class="thumb-wrap yt-thumb"><img src="'+esc(thumb)+'" loading="lazy"></div><div class="card-body"><p class="card-title">'+esc(v.title||'Golden Retriever Video')+'</p><div class="card-footer"><span class="card-stat">YouTube</span>'+makeSaveBtn(watchUrl,post)+'</div></div></div>';
+        });
+        document.getElementById('ytContent').innerHTML=html+'</div>';
+      })
+      .catch(function(){clearTimeout(timer);tryInst(idx+1);});
+  }
+  tryInst(0);
 }
 
 function normalizeIg(raw){try{var u=new URL(raw.trim());if(!u.hostname.includes('instagram.com'))return null;var m=u.pathname.match(/\/(p|reel|tv)\/([A-Za-z0-9_-]+)/);return m?'https://www.instagram.com/'+m[1]+'/'+m[2]+'/':null;}catch(e){return null;}}
