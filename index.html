@@ -143,7 +143,7 @@
   <!-- REDDIT -->
   <div class="panel active" id="panel-reddit">
     <div class="panel-header">
-      <span class="panel-title">r/goldenretrievers</span>
+      <span class="panel-title">Golden retriever photos 🐾</span>
       <div class="panel-controls">
         <button class="sort-btn active" data-rsort="hot">🔥 Hot</button>
         <button class="sort-btn" data-rsort="new">✨ New</button>
@@ -246,64 +246,62 @@ function showToast(msg){var t=document.getElementById('toast');if(!t){t=document
 function savePost(post){if(savedUrls[post.url])return;savedUrls[post.url]=true;savedPosts.unshift(post);persistSaved();showToast('💛 Saved!');document.querySelectorAll('[data-surl]').forEach(function(b){if(decodeURIComponent(b.dataset.surl)===post.url){b.textContent='✓ Saved';b.classList.add('saved');}});}
 function makeSaveBtn(url,post){var saved=!!savedUrls[url];return '<button class="save-btn'+(saved?' saved':'')+'\" data-surl="'+encodeURIComponent(url)+'" data-p="'+esc(JSON.stringify(post))+'" onclick="savePost(JSON.parse(decodeURIComponent(this.dataset.p)))">'+(saved?'✓ Saved':'+ Save')+'</button>';}
 function ytId(url){try{var u=new URL(url);if(u.hostname==='youtu.be')return u.pathname.slice(1).split(/[?&]/)[0];if(u.hostname.includes('youtube.com')){var v=u.searchParams.get('v');if(v)return v;var m=u.pathname.match(/\/(?:shorts|embed|v)\/([A-Za-z0-9_-]{11})/);if(m)return m[1];}}catch(e){}return null;}
-// Fetch a Reddit JSON URL, trying direct then two CORS proxies, each with a 7s timeout
-function fetchRedditUrl(url){
-  var attempts=[
-    url,
-    'https://corsproxy.io/?'+encodeURIComponent(url),
-    'https://api.allorigins.win/get?url='+encodeURIComponent(url)
-  ];
-  function tryOne(i){
-    if(i>=attempts.length) return Promise.reject(new Error('all failed'));
-    var ctrl=new AbortController();
-    var timer=setTimeout(function(){ctrl.abort();},7000);
-    return fetch(attempts[i],{signal:ctrl.signal})
-      .then(function(r){
-        clearTimeout(timer);
-        if(!r.ok) throw new Error('http '+r.status);
-        return r.json();
-      })
-      .then(function(d){
-        // allorigins wraps in {contents:'...json...'}
-        if(d&&typeof d.contents==='string') d=JSON.parse(d.contents);
-        if(!d||!d.data) throw new Error('bad data');
-        return d;
-      })
-      .catch(function(e){clearTimeout(timer);return tryOne(i+1);});
-  }
-  return tryOne(0);
-}
+// ── Dog CEO API — guaranteed CORS-safe golden retriever photos ──
 function loadReddit(force){
   if(!force&&redditLoaded)return;
   var btn=document.getElementById('rBtn');btn.disabled=true;btn.textContent='Loading…';
-  document.getElementById('redditContent').innerHTML='<div class="status-msg">Loading golden goodness… 🐶</div>';
-  fetchRedditUrl('https://www.reddit.com/r/goldenretrievers/'+redditSort+'.json?limit=40&raw_json=1')
+  document.getElementById('redditContent').innerHTML='<div class="status-msg">Fetching golden retrievers… 🐶</div>';
+  // Dog CEO API: free, no auth, CORS-safe, real golden retriever photos
+  fetch('https://dog.ceo/api/breed/retriever/golden/images/random/30')
+    .then(function(r){return r.json();})
     .then(function(data){
       btn.disabled=false;btn.textContent='↻ Refresh';redditLoaded=true;
-      var items=(data.data.children||[]).filter(function(c){var p=c.data;return !p.over_18&&!p.is_self&&p.preview&&p.preview.images&&p.preview.images[0];});
-      if(!items.length){document.getElementById('redditContent').innerHTML='<div class="status-msg">No posts found — try a different sort.</div>';return;}
+      var images=data.message||[];
+      if(!images.length){document.getElementById('redditContent').innerHTML='<div class="status-msg">No photos found — tap refresh to try again.</div>';return;}
       var html='<div class="content-grid">';
-      items.forEach(function(c){var p=c.data;var res=p.preview.images[0].resolutions||[];var img=(res.length?res[Math.min(2,res.length-1)].url:p.thumbnail).replace(/&amp;/g,'&');var postUrl='https://www.reddit.com'+p.permalink;var post={type:'reddit',url:postUrl,title:p.title,img:img};html+='<div class="content-card"><div class="thumb-wrap reddit-thumb"><img src="'+esc(img)+'" loading="lazy"></div><div class="card-body"><p class="card-title">'+esc(p.title)+'</p><div class="card-footer"><span class="card-stat">▲ '+fmtNum(p.ups)+'</span>'+makeSaveBtn(postUrl,post)+'</div></div></div>';});
+      images.forEach(function(imgUrl,i){
+        var post={type:'reddit',url:imgUrl,title:'Golden Retriever Photo #'+(i+1),img:imgUrl};
+        html+='<div class="content-card"><div class="thumb-wrap reddit-thumb"><img src="'+esc(imgUrl)+'" loading="lazy"></div><div class="card-body"><p class="card-title">Golden Retriever 🐾</p><div class="card-footer"><span class="card-stat">dog.ceo/api</span>'+makeSaveBtn(imgUrl,post)+'</div></div></div>';
+      });
       document.getElementById('redditContent').innerHTML=html+'</div>';
     })
-    .catch(function(){btn.disabled=false;btn.textContent='↻ Refresh';document.getElementById('redditContent').innerHTML='<div class="status-msg">Couldn\'t load Reddit.<br><span class="retry" onclick="loadReddit(true)">Tap to retry</span></div>';});
+    .catch(function(){btn.disabled=false;btn.textContent='↻ Refresh';document.getElementById('redditContent').innerHTML='<div class="status-msg">Couldn't load photos.<br><span class="retry" onclick="loadReddit(true)">Tap to retry</span></div>';});
 }
+
+// ── YouTube via rss2json + Reddit search RSS ──
 function loadYoutube(force){
   if(!force&&ytLoaded)return;
   var btn=document.getElementById('yBtn');btn.disabled=true;btn.textContent='Loading…';
   document.getElementById('ytContent').innerHTML='<div class="status-msg">Searching for golden retriever videos… 🎬</div>';
-  fetchRedditUrl('https://www.reddit.com/search.json?q=golden+retriever+site:youtube.com&sort='+ytSort+'&limit=50&raw_json=1')
+  var sortMap={'top&t=month':'top&t=month','new':'new','top&t=all':'top&t=all'};
+  var redditRss='https://www.reddit.com/search.rss?q=golden+retriever+site:youtube.com&sort='+ytSort+'&limit=50';
+  var apiUrl='https://api.rss2json.com/v1/api.json?rss_url='+encodeURIComponent(redditRss)+'&count=50';
+  fetch(apiUrl)
+    .then(function(r){return r.json();})
     .then(function(data){
       btn.disabled=false;btn.textContent='↻ Refresh';ytLoaded=true;
       var seen={},videos=[];
-      (data.data.children||[]).forEach(function(c){var p=c.data;if(p.over_18)return;var id=ytId(p.url);if(!id||seen[id])return;seen[id]=true;videos.push({id:id,title:p.title,ups:p.ups,sub:p.subreddit});});
+      (data.items||[]).forEach(function(item){
+        var id=ytId(item.link||'') || ytId(item.guid||'');
+        // also check description for youtube links
+        if(!id){var m=(item.description||'').match(/youtube\.com\/watch\?v=([A-Za-z0-9_-]{11})/);if(m)id=m[1];}
+        if(!id||seen[id])return;
+        seen[id]=true;
+        videos.push({id:id,title:item.title||'Golden Retriever Video'});
+      });
       if(!videos.length){document.getElementById('ytContent').innerHTML='<div class="status-msg">No videos found — try a different sort or <span class="retry" onclick="loadYoutube(true)">tap to retry</span>.</div>';return;}
       var html='<div class="content-grid">';
-      videos.forEach(function(v){var watchUrl='https://www.youtube.com/watch?v='+v.id;var thumb='https://img.youtube.com/vi/'+v.id+'/mqdefault.jpg';var post={type:'youtube',url:watchUrl,ytId:v.id,title:v.title};html+='<div class="content-card"><div class="thumb-wrap yt-thumb"><img src="'+esc(thumb)+'" loading="lazy"></div><div class="card-body"><p class="card-title">'+esc(v.title)+'</p><div class="card-footer"><span class="card-stat">▲ '+fmtNum(v.ups)+' · r/'+esc(v.sub)+'</span>'+makeSaveBtn(watchUrl,post)+'</div></div></div>';});
+      videos.forEach(function(v){
+        var watchUrl='https://www.youtube.com/watch?v='+v.id;
+        var thumb='https://img.youtube.com/vi/'+v.id+'/mqdefault.jpg';
+        var post={type:'youtube',url:watchUrl,ytId:v.id,title:v.title};
+        html+='<div class="content-card"><div class="thumb-wrap yt-thumb"><img src="'+esc(thumb)+'" loading="lazy"></div><div class="card-body"><p class="card-title">'+esc(v.title)+'</p><div class="card-footer"><span class="card-stat">YouTube</span>'+makeSaveBtn(watchUrl,post)+'</div></div></div>';
+      });
       document.getElementById('ytContent').innerHTML=html+'</div>';
     })
-    .catch(function(){btn.disabled=false;btn.textContent='↻ Refresh';document.getElementById('ytContent').innerHTML='<div class="status-msg">Couldn\'t load videos.<br><span class="retry" onclick="loadYoutube(true)">Tap to retry</span></div>';});
+    .catch(function(){btn.disabled=false;btn.textContent='↻ Refresh';document.getElementById('ytContent').innerHTML='<div class="status-msg">Couldn't load videos.<br><span class="retry" onclick="loadYoutube(true)">Tap to retry</span></div>';});
 }
+
 function normalizeIg(raw){try{var u=new URL(raw.trim());if(!u.hostname.includes('instagram.com'))return null;var m=u.pathname.match(/\/(p|reel|tv)\/([A-Za-z0-9_-]+)/);return m?'https://www.instagram.com/'+m[1]+'/'+m[2]+'/':null;}catch(e){return null;}}
 function addInstagram(){var input=document.getElementById('igInput'),url=normalizeIg(input.value);if(!url){showErr('Please paste a valid Instagram post or reel URL.');return;}if(savedUrls[url]){showErr('Already saved!');return;}savePost({type:'instagram',url:url});input.value='';}
 function showErr(msg){var el=document.getElementById('igError');el.textContent=msg;el.style.display='block';setTimeout(function(){el.style.display='none';},3500);}
