@@ -283,8 +283,7 @@ function loadYoutube(force){
       var seen={},videos=[];
       (data.items||[]).forEach(function(item){
         var id=ytId(item.link||'') || ytId(item.guid||'');
-        // also check description for youtube links
-        if(!id){var m=(item.description||'').match(/youtube\.com\/watch\?v=([A-Za-z0-9_-]{11})/);if(m)id=m[1];}
+if(!id){var us=((item.description||'')+' '+(item.content||'')).match(/https?:\/\/[^\s"<>\\]+/g)||[];for(var k=0;k<us.length&&!id;k++){id=ytId(us[k]);}}
         if(!id||seen[id])return;
         seen[id]=true;
         videos.push({id:id,title:item.title||'Golden Retriever Video'});
