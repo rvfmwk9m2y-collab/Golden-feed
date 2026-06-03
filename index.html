@@ -266,8 +266,7 @@ function loadYoutube(force){
   if(!force&&ytLoaded)return;
   var btn=document.getElementById('yBtn');btn.disabled=true;btn.textContent='Loading…';
   document.getElementById('ytContent').innerHTML='<div class="status-msg">Searching for golden retriever videos… 🎬</div>';
-  fetch('https://www.reddit.com/search.json?q=golden+retriever+site:youtube.com&sort='+ytSort+'&limit=50&raw_json=1')
-    .then(function(r){return r.json();})
+  redditFetch('https://www.reddit.com/search.json?q=golden+retriever+site:youtube.com&sort='+ytSort+'&limit=50&raw_json=1')
     .then(function(data){
       btn.disabled=false;btn.textContent='↻ Refresh';ytLoaded=true;
       var seen={},videos=[];
