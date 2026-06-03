@@ -273,17 +273,15 @@ function loadYoutube(force){
   if(!force&&ytLoaded)return;
   var btn=document.getElementById('yBtn');btn.disabled=true;btn.textContent='Loading…';
   document.getElementById('ytContent').innerHTML='<div class="status-msg">Searching for golden retriever videos… 🎬</div>';
-  var sortMap={'top&t=month':'top&t=month','new':'new','top&t=all':'top&t=all'};
-  var redditRss='https://www.reddit.com/search.rss?q=golden+retriever+site:youtube.com&sort='+ytSort+'&limit=50';
-  var apiUrl='https://api.rss2json.com/v1/api.json?rss_url='+encodeURIComponent(redditRss)+'&count=50';
-  fetch(apiUrl)
+  var url='https://www.reddit.com/search.json?q=golden+retriever+site%3Ayoutube.com&sort='+ytSort+'&limit=25';
+  fetch(url)
     .then(function(r){return r.json();})
     .then(function(data){
       btn.disabled=false;btn.textContent='↻ Refresh';ytLoaded=true;
       var seen={},videos=[];
-      (data.items||[]).forEach(function(item){
-        var id=ytId(item.link||'') || ytId(item.guid||'');
-        if(!id){var us=((item.description||'')+' '+(item.content||'')).match(/https?:\/\/[^\s"<>\\]+/g)||[];for(var k=0;k<us.length&&!id;k++){id=ytId(us[k]);}}
+      ((data.data&&data.data.children)||[]).forEach(function(child){
+        var item=child.data;
+        var id=ytId(item.url||'');
         if(!id||seen[id])return;
         seen[id]=true;
         videos.push({id:id,title:item.title||'Golden Retriever Video'});
