@@ -265,7 +265,7 @@ function loadReddit(force){
       });
       document.getElementById('redditContent').innerHTML=html+'</div>';
     })
-    .catch(function(){btn.disabled=false;btn.textContent='↻ Refresh';document.getElementById('redditContent').innerHTML='<div class="status-msg">Couldn't load photos.<br><span class="retry" onclick="loadReddit(true)">Tap to retry</span></div>';});
+    .catch(function(){btn.disabled=false;btn.textContent='↻ Refresh';document.getElementById('redditContent').innerHTML='<div class="status-msg">Could not load photos.<br><span class="retry" onclick="loadReddit(true)">Tap to retry</span></div>';});
 }
 
 // ── YouTube via rss2json + Reddit search RSS ──
@@ -299,7 +299,7 @@ function loadYoutube(force){
       });
       document.getElementById('ytContent').innerHTML=html+'</div>';
     })
-    .catch(function(){btn.disabled=false;btn.textContent='↻ Refresh';document.getElementById('ytContent').innerHTML='<div class="status-msg">Couldn't load videos.<br><span class="retry" onclick="loadYoutube(true)">Tap to retry</span></div>';});
+    .catch(function(){btn.disabled=false;btn.textContent='↻ Refresh';document.getElementById('ytContent').innerHTML='<div class="status-msg">Could not load videos.<br><span class="retry" onclick="loadYoutube(true)">Tap to retry</span></div>';});
 }
 
 function normalizeIg(raw){try{var u=new URL(raw.trim());if(!u.hostname.includes('instagram.com'))return null;var m=u.pathname.match(/\/(p|reel|tv)\/([A-Za-z0-9_-]+)/);return m?'https://www.instagram.com/'+m[1]+'/'+m[2]+'/':null;}catch(e){return null;}}
