@@ -223,6 +223,9 @@ var savedPosts=JSON.parse(localStorage.getItem('goldenPosts')||'[]');
 var savedUrls={};
 savedPosts.forEach(function(p){savedUrls[p.url]=true;});
 function persistSaved(){localStorage.setItem('goldenPosts',JSON.stringify(savedPosts));}
+var savedSort='rating';
+function setSavedSort(s,btn){savedSort=s;document.querySelectorAll('.sort-opt').forEach(function(b){b.classList.remove('active');});btn.classList.add('active');renderSaved();}
+function rateSaved(url,r){savedPosts.forEach(function(p){if(p.url===url)p.rating=p.rating===r?0:r;});persistSaved();renderSaved();}
 var redditSort='hot',ytSort='relevance',redditLoaded=false,ytLoaded=false;
 var YT_API_KEY='AIzaSyAarTo3SF6v8aneQbL7f9jdnFha0L7ivJU';
 document.querySelectorAll('.tab').forEach(function(tab){
@@ -317,7 +320,9 @@ function renderSaved(){
   document.getElementById('postCount').textContent=savedPosts.length;
   if(!savedPosts.length){container.style.display='none';empty.style.display='block';return;}
   container.style.display='block';empty.style.display='none';
-  document.getElementById('savedFeed').innerHTML=savedPosts.map(function(post){
+  var sorted=savedPosts.slice();
+  if(savedSort==='rating')sorted.sort(function(a,b){return(b.rating||0)-(a.rating||0);});
+  document.getElementById('savedFeed').innerHTML=sorted.map(function(post){
     var safe=esc(post.url),badge,body;
     if(post.type==='instagram'){
       badge='<span class="source-badge ig">Instagram</span>';
@@ -329,7 +334,12 @@ function renderSaved(){
       badge='<span class="source-badge reddit">Reddit</span>';
       body='<div class="reddit-saved">'+(post.img?'<img src="'+esc(post.img)+'" loading="lazy">':'')+'<div class="caption">'+esc(post.title||'')+'<br><a href="'+safe+'" target="_blank" rel="noopener">View on Reddit →</a></div></div>';
     }
-    return '<div class="post-card"><div class="post-header"><div class="post-meta">'+badge+'<span class="post-url-text"><a href="'+safe+'" target="_blank" rel="noopener">'+safe+'</a></span></div><button class="remove-btn" onclick="removePost(decodeURIComponent(\''+encodeURIComponent(post.url)+'\'))">×</button></div>'+body+'</div>';
+    var pr=post.rating||0;
+    var eu=encodeURIComponent(post.url);
+    var paws='<div class="paw-rating"><span class="paw-label">Rate:</span>';
+    for(var i=1;i<=3;i++){paws+='<button class="paw-btn'+(i<=pr?' active':'')+'" onclick="rateSaved(decodeURIComponent(\''+eu+'\'),'+i+')">🐾</button>';}
+    paws+='</div>';
+    return '<div class="post-card"><div class="post-header"><div class="post-meta">'+badge+'<span class="post-url-text"><a href="'+safe+'" target="_blank" rel="noopener">'+safe+'</a></span></div><button class="remove-btn" onclick="removePost(decodeURIComponent(\''+encodeURIComponent(post.url)+'\'))">×</button></div>'+body+paws+'</div>';
   }).join('');
   if(window.instgrm)window.instgrm.Embeds.process();
 }
